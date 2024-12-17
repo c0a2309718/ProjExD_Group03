@@ -36,9 +36,8 @@ class Fly(pg.sprite.Sprite):
         """
         if key_lst[pg.K_f]:
             if mp.value >= 1:
-                return mp.value-2, 0
+                return mp.value-1, 0
             else:
-                mp.restart()
                 y = vy + GRAVITY
                 return mp.value, y
         else:
