@@ -42,15 +42,15 @@ class Fly(pg.sprite.Sprite):
                 return mp, y
         else:
             y = vy + GRAVITY
-            return mp, y 
-
-
+            return mp, y
+        
+        
 def main():
     pg.display.set_caption("はばたけ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
-    gravity = GRAVITY
     fly = Fly()
+    mp = 100
 
     # 画像読み込み
     bg_img = pg.image.load("fig/pg_bg.jpg")
@@ -71,14 +71,14 @@ def main():
         key_lst = pg.key.get_pressed()
         for event in pg.event.get():
             if event.type == pg.QUIT:
-                return     
+                return
             
         # ジャンプ処理（スペースキー）
         if key_lst[pg.K_SPACE]:
             vy = JUMP_POWER  # ジャンプ初速を設定
 
         # 重力による縦移動
-        mp,vy = fly.flying(key_lst, mp, vy)
+        vy, mp = fly.flying(key_lst, mp, vy)
         kk_rct.move_ip(0, vy)
 
         # ブロックの移動処理と再生成
