@@ -50,7 +50,6 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
     gravity = GRAVITY
-    mp = 100
     fly = Fly()
 
     # 画像読み込み
