@@ -21,30 +21,6 @@ def create_random_block(offset=0):
     block_y = random.randint(GROUND - 300, GROUND - 50)  # Y座標は地面から少し上の範囲
     return pg.Rect(block_x, block_y, block_width, block_height)
 
-<<<<<<< HEAD
-class Fly(pg.sprite.Sprite):
-    """
-    Fキーを押し続けている間滞空するクラス
-    """
-    
-    def __init__(self):
-        self.gravity = GRAVITY
-
-    def flying(self, key_lst: list, mp: int, vy: float):
-        """
-        滞空を操作する
-        引数1:押されているキーのリスト
-        """
-        if key_lst[pg.K_f]:
-            if mp >= 1:
-                return mp-1, 0
-            else:
-                y = vy + GRAVITY
-                return mp, y
-        else:
-            y = vy + GRAVITY
-            return mp, y 
-=======
 class MP:
     """
     生存時間に応じてMPを獲得するクラス
@@ -69,20 +45,14 @@ class MP:
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
 
->>>>>>> 1f8f33d (追加機能：MPの追加)
 
 
 def main():
     pg.display.set_caption("はばたけ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
-<<<<<<< HEAD
-    gravity = GRAVITY
-    fly = Fly()
-=======
     mp = MP()
->>>>>>> 1f8f33d (追加機能：MPの追加)
-
+    
     # 画像読み込み
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bg_img2 = pg.transform.flip(bg_img, True, False)
@@ -101,19 +71,14 @@ def main():
         key_lst = pg.key.get_pressed()
         for event in pg.event.get():
             if event.type == pg.QUIT:
-<<<<<<< HEAD
-                return     
-            
-=======
                 return
+            
         # キー入力の取得
         key_lst = pg.key.get_pressed()
->>>>>>> 1f8f33d (追加機能：MPの追加)
         # ジャンプ処理（スペースキー）
         if key_lst[pg.K_SPACE]:
             vy = JUMP_POWER  # ジャンプ初速を設定
         # 重力による縦移動
-        mp,vy = fly.flying(key_lst, mp, vy)
         kk_rct.move_ip(0, vy)
         # ブロックの移動処理と再生成
         for i, block in enumerate(blocks):
