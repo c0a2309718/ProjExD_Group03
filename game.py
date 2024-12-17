@@ -29,20 +29,21 @@ class Fly(pg.sprite.Sprite):
     def __init__(self):
         self.gravity = GRAVITY
 
-    def flying(self, key_lst: list, mp: int, vy: float):
+    def flying(self, key_lst: list, mp: MP, vy: float):
         """
         滞空を操作する
         引数1:押されているキーのリスト
         """
         if key_lst[pg.K_f]:
-            if mp >= 1:
-                return mp-1, 0
+            if mp.value >= 1:
+                return mp.value-2, 0
             else:
+                mp.restart()
                 y = vy + GRAVITY
-                return mp, y
+                return mp.value, y
         else:
             y = vy + GRAVITY
-            return mp, y
+            return mp.value, y
         
         
 def main():
@@ -50,7 +51,6 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
     fly = Fly()
-    mp = 100
 
     # 画像読み込み
     bg_img = pg.image.load("fig/pg_bg.jpg")
@@ -78,7 +78,7 @@ def main():
             vy = JUMP_POWER  # ジャンプ初速を設定
 
         # 重力による縦移動
-        vy, mp = fly.flying(key_lst, mp, vy)
+        mp, vy = fly.flying(key_lst, mp, vy)
         kk_rct.move_ip(0, vy)
 
         # ブロックの移動処理と再生成
