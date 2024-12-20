@@ -23,14 +23,20 @@ def create_random_block(offset=0):
 
 
 class Startkoukaton:
-
-    img = pg.image.load("fig/2.png")
-    img = pg.transform.scale(img, (40, 40))
-    sikaku = pg.Surface((WIDTH, HEIGHT))
+    """
+    スタート画面のこうかとんと下線に関するクラス
+    """
+    img = pg.image.load("fig/2.png")  # こうかとんの画像
+    img = pg.transform.scale(img, (40, 40))  # こうかとんを縮小
+    sikaku = pg.Surface((WIDTH, HEIGHT))  # 下線Surfaceを生成
     pg.draw.rect(sikaku, (34, 139, 34), (360, 300, 130, 5))
     sikaku.set_colorkey((0, 0, 0))
 
     def __init__(self, xy: tuple[int, int]):
+        """
+        こうかとん画像Surfaceを生成する
+        引数 xy：こうかとん画像の初期位置座標タプル
+        """
         self.img = __class__.img
         self.sikaku = __class__.sikaku
         self.rct: pg.Rect = self.img.get_rect() #こうかとんrectを取得する
@@ -39,6 +45,11 @@ class Startkoukaton:
         self.rect.center = 365, 400  # 下線の初期座標
 
     def update(self, key_lst: list[bool], screen: pg.Surface):
+        """
+        押下キーに応じてこうかとんと下線を移動させる
+        引数1 key_lst：押下キーの真理値リスト
+        引数2 screen：画面Surface
+        """
         if key_lst[pg.K_UP]:
             self.rct.center = 300, 385
             self.rect.center = 365, 400
@@ -123,7 +134,7 @@ def main():
     vy = 0  # 縦方向速度
 
     stbird = Startkoukaton((300, 385))
-    scene = 0  # 画面の切り替え判定
+    scene = 0  # 画面の切り替え判定 0:スタート画面, 1:ゲーム画面, 2:遊び方画面
     sentaku = 0  # 選択肢の切り替え判定
     tmr = 0
     while True:
@@ -136,27 +147,27 @@ def main():
 
         # スタート画面
         if scene == 0:
-            screen.blit(bg_img, [0, 0])
+            screen.blit(bg_img, [0, 0])  # 背景画像を表示
             start(screen)
             stbird.update(key_lst, screen)
             pg.display.update()
             if key_lst[pg.K_UP]:
-                sentaku = 0
+                sentaku = 0  # ゲーム開始を選択
             if key_lst[pg.K_DOWN]:
-                sentaku = 1
-            if key_lst[pg.K_SPACE]:
+                sentaku = 1  # あそびかたを選択
+            if key_lst[pg.K_SPACE]:  # スペースキーで決定
                 if sentaku == 0:
-                    scene = 1
+                    scene = 1  # ゲーム画面へ移動
                 if sentaku == 1:
-                    scene = 2
+                    scene = 2  # あそびかた画面へ移動
 
 
         # あそびかた画面
         if scene == 2:
-            screen.blit(bg_img, [0, 0])
+            screen.blit(bg_img, [0, 0])  # 背景画像を表示
             asobikata(screen)
             if key_lst[pg.K_RSHIFT]:
-                scene = 0
+                scene = 0  # スタート画面へ移動
         
         # ゲーム画面
         if scene == 1:
