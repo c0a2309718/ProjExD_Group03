@@ -46,12 +46,36 @@ class MP:
         screen.blit(self.image, self.rect)
 
 
+class Fly(pg.sprite.Sprite):
+    """
+    Fキーを押し続けている間滞空するクラス
+    """
+    
+    def __init__(self):
+        self.gravity = GRAVITY
+
+    def flying(self, key_lst: list, mp: MP, vy: float):
+        """
+        滞空を操作する
+        引数1:押されているキーのリスト
+        """
+        if key_lst[pg.K_f]:
+            if mp.value >= 1:
+                return mp.value-1, 0
+            else:
+                y = vy + GRAVITY
+                return mp.value, y
+        else:
+            y = vy + GRAVITY
+            return mp.value, y
+
 
 def main():
     pg.display.set_caption("はばたけ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
     mp = MP()
+    fly = Fly()
     
     # 画像読み込み
     bg_img = pg.image.load("fig/pg_bg.jpg")
@@ -79,6 +103,7 @@ def main():
         if key_lst[pg.K_SPACE]:
             vy = JUMP_POWER  # ジャンプ初速を設定
         # 重力による縦移動
+        mp, vy = fly.flying(key_lst, mp, vy)
         kk_rct.move_ip(0, vy)
         # ブロックの移動処理と再生成
         for i, block in enumerate(blocks):
