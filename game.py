@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import pygame as pg
 import random
 
@@ -9,11 +10,16 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 WIDTH, HEIGHT = 800, 600  # 画面の幅と高さ
 GRAVITY = 0.4  # 重力の強さ
 JUMP_POWER = -11  # ジャンプの力
-GROUND = HEIGHT - 100  # 地面の高さ
 BLOCK_SPEED = 7  # ブロックの移動速度
 NUM_BLOCKS = 3  # ブロックの数
 BLOCK_INTERVAL = 350  # ブロック間の間隔
 SPIKE_HEIGHT = 9  # トゲの高さ（赤い線の太さ）
+
+def SE(sound, vol=0.7):
+    sound_effect = pg.mixer.Sound(sound)
+    sound_effect.set_volume(vol)  # 音量を設定
+    sound_effect.play()
+
 
 def create_random_block(previous_x: int) -> tuple[pg.Rect, pg.Rect]:
     """
@@ -26,7 +32,7 @@ def create_random_block(previous_x: int) -> tuple[pg.Rect, pg.Rect]:
     block_width = random.randint(100, 250)  # ブロックの幅をランダムに設定
     block_height = 20  # ブロックの高さ
     block_x = previous_x + BLOCK_INTERVAL  # ブロックのX座標を前のブロックから等間隔を開ける
-    block_y = random.randint(GROUND - 350, GROUND - 100)  # ブロックのY座標をランダムに設定
+    block_y = random.randint(HEIGHT - 450, HEIGHT - 200)  # ブロックのY座標をランダムに設定
 
     block = pg.Rect(block_x, block_y, block_width, block_height)  # ブロックの矩形を作成
     spike = pg.Rect(block_x, block_y + block_height, block_width, SPIKE_HEIGHT)  # ブロックの下に表示される赤い線(トゲの矩形)を作成
@@ -69,11 +75,21 @@ def check_collision(
                 on_block = True 
                 jump_count = 0  
                 can_double_jump = True  
-            elif vy < 0 and kk_rct.top >= block.bottom:  # 「こうかとん」がブロックの下から衝突した場合
+            elif kk_rct.top+5 >= block.bottom:  # 「こうかとん」がブロックの下から衝突した場合
+                pg.mixer.music.stop()
+                SE("sound/clash.mp3", 1.5)
+                time.sleep(0.5)
+                SE("sound/scream.mp3", 1.5)
+                time.sleep(2)
                 print("ゲームオーバー")
                 pg.quit()
                 sys.exit()
             else:  # その他の衝突
+                pg.mixer.music.stop()
+                SE("sound/clash.mp3", 1.5)
+                time.sleep(0.5)
+                SE("sound/scream.mp3", 1.5)
+                time.sleep(2)
                 print("ゲームオーバー2")
                 pg.quit()
                 sys.exit()
@@ -84,7 +100,7 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))  
     clock = pg.time.Clock() 
 
-    bg_img = pg.image.load("fig/pg_bg.jpg")
+    bg_img = pg.image.load("fig/pg_bg1.jpg")
     bg_img2 = pg.transform.flip(bg_img, True, False)
     kk_img = pg.transform.flip(pg.image.load("fig/3.png"), True, False)
     kk_rct = kk_img.get_rect(midbottom=(100, 200))
@@ -97,6 +113,13 @@ def main():
     can_double_jump = True  # ダブルジャンプの可否
     jump_count = 0  # ジャンプ回数
 
+    alive = True
+
+    pg.mixer.music.load("sound/BGM：MusMus.mp3")
+    pg.mixer.music.set_volume(0.3)
+    # 音楽をループ再生（-1は無限ループ）
+    pg.mixer.music.play(-1)
+
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT: 
@@ -105,6 +128,7 @@ def main():
                 if event.key == pg.K_SPACE:  
                     if jump_count < 2:  
                         vy = JUMP_POWER
+                        SE("sound/jump.mp3")
                         jump_count += 1
 
         vy += GRAVITY  
@@ -123,6 +147,11 @@ def main():
 
         # 「こうかとん」とブロック、トゲの描画
         screen.blit(kk_img, kk_rct)
+        if kk_rct.top >= HEIGHT and alive == True:
+            pg.mixer.music.stop()
+            SE("sound/scream.mp3")
+            alive = False
+    
         for block in blocks:
             pg.draw.rect(screen, (0, 255, 0), block) 
         for spike in spikes:
