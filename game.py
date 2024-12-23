@@ -21,36 +21,38 @@ def create_random_block(offset=0):
     block_y = random.randint(GROUND - 300, GROUND - 50)  # Y座標は地面から少し上の範囲
     return pg.Rect(block_x, block_y, block_width, block_height)
 
-class Fly(pg.sprite.Sprite):
+class MP:
     """
-    Fキーを押し続けている間滞空するクラス
+    生存時間に応じてMPを獲得するクラス
+    1秒 = 1MP
     """
-    
     def __init__(self):
-        self.gravity = GRAVITY
+        self.font = pg.font.Font(None, 50)
+        self.color = (174, 0, 45)
+        self.value = 0
+        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = 100, HEIGHT-50
+        self.counter = 0
 
-    def flying(self, key_lst: list, mp: MP, vy: float):
-        """
-        滞空を操作する
-        引数1:押されているキーのリスト
-        """
-        if key_lst[pg.K_f]:
-            if mp.value >= 1:
-                return mp.value-1, 0
-            else:
-                y = vy + GRAVITY
-                return mp.value, y
-        else:
-            y = vy + GRAVITY
-            return mp.value, y
-        
-        
+    def count(self):
+        self.counter += 1
+        if self.counter == 100:
+            self.counter = 0
+            self.value += 1
+
+    def update(self, screen: pg.Surface):
+        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+        screen.blit(self.image, self.rect)
+
+
+
 def main():
     pg.display.set_caption("はばたけ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
-    fly = Fly()
-
+    mp = MP()
+    
     # 画像読み込み
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bg_img2 = pg.transform.flip(bg_img, True, False)
@@ -64,7 +66,6 @@ def main():
 
     # 速度変数
     vy = 0  # 縦方向速度
-
     tmr = 0
     while True:
         key_lst = pg.key.get_pressed()
@@ -72,20 +73,18 @@ def main():
             if event.type == pg.QUIT:
                 return
             
+        # キー入力の取得
+        key_lst = pg.key.get_pressed()
         # ジャンプ処理（スペースキー）
         if key_lst[pg.K_SPACE]:
             vy = JUMP_POWER  # ジャンプ初速を設定
-
         # 重力による縦移動
-        mp, vy = fly.flying(key_lst, mp, vy)
         kk_rct.move_ip(0, vy)
-
         # ブロックの移動処理と再生成
         for i, block in enumerate(blocks):
             block.move_ip(-BLOCK_SPEED, 0)  # ブロックを左に移動
             if block.right < 0:  # 画面外に出たらランダムに再生成
                 blocks[i] = create_random_block(random.randint(200, 600))  # 次のブロックをランダム位置で再生成
-
         # キャラクターとブロックの当たり判定
         on_block = False
         for block in blocks:
@@ -94,27 +93,24 @@ def main():
                 vy = 0  # 落下を止める
                 on_block = True
                 break
-
         # 地面の処理（着地判定）
         if not on_block:  # ブロックの上にいない場合のみ地面を確認
             if kk_rct.bottom > GROUND:
                 kk_rct.bottom = GROUND
                 vy = 0  # 着地したら速度リセット
-
         # 背景スクロール
         x = -(tmr % 3200)
         screen.blit(bg_img, [x, 0])
         screen.blit(bg_img2, [x + 1600, 0])
         screen.blit(bg_img, [x + 3200, 0])
         screen.blit(bg_img2, [x + 4800, 0])
-
         # キャラクターの描画
         screen.blit(kk_img, kk_rct)
-
         # ブロックの描画
         for block in blocks:
             pg.draw.rect(screen, (0, 255, 0), block)  # 緑色のブロック
-
+        mp.count()
+        mp.update(screen)
         pg.display.update()
         tmr += 10  # 背景スクロールの速度
         clock.tick(60)  # フレームレート設定
