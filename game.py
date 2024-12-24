@@ -95,6 +95,47 @@ def check_collision(
                 sys.exit()
     return vy, on_block, jump_count, can_double_jump
 
+
+class Timecount:
+    """
+    タイムをカウントし表示するクラス
+    """
+    def __init__(self):
+        self.font = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 40)
+        self.color = (255, 255, 255)
+        self.start_ticks = pg.time.get_ticks()
+        self.final_time = 0
+
+    def update(self, screen):
+        """
+        経過時間を計算し、画面に表示する
+        """
+        elapsed_time = (pg.time.get_ticks() - self.start_ticks) / 1000
+        self.final_time = elapsed_time  # ゲームオーバー時に最終タイムを記録
+        time_surface = self.font.render(f"Time: {elapsed_time:.2f} 秒", True, self.color)
+        screen.blit(time_surface, (10, 10))
+
+
+def gameover(screen, time_counter):
+    """
+    ゲームオーバー画面を表示する関数
+    """
+    overlay = pg.Surface((WIDTH, HEIGHT))
+    overlay.set_alpha(180)  # 透明度を設定
+    overlay.fill((0, 0, 0))  # 黒色で塗りつぶす
+    screen.blit(overlay, (0, 0))
+
+    font = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 72)
+    gameover_text = font.render("Game Over", True, (255, 0, 0))
+    text_rect = gameover_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 50))
+    screen.blit(gameover_text, text_rect)
+
+    font_small = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 48)
+    time_text = font_small.render(f"Time: {time_counter.final_time:.2f} 秒", True, (255, 255, 255))
+    time_rect = time_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 20))
+    screen.blit(time_text, time_rect)
+    pg.display.update()
+
 def main():
     pg.init()
     screen = pg.display.set_mode((WIDTH, HEIGHT))  
@@ -120,6 +161,9 @@ def main():
     # 音楽をループ再生（-1は無限ループ）
     pg.mixer.music.play(-1)
 
+    # タイムカウントクラスのインスタンス作成
+    time_counter = Timecount()
+
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT: 
@@ -130,6 +174,10 @@ def main():
                         vy = JUMP_POWER
                         SE("sound/jump.mp3")
                         jump_count += 1
+                if event.key == pg.K_q:#qキーを押すとゲームオーバー画面が表示される
+                    gameover(screen, time_counter)
+                    time.sleep(2)
+                    return
 
         vy += GRAVITY  
         kk_rct.move_ip(0, vy)  
@@ -155,7 +203,10 @@ def main():
         for block in blocks:
             pg.draw.rect(screen, (0, 255, 0), block) 
         for spike in spikes:
-            pg.draw.rect(screen, (255, 0, 0), spike)  
+            pg.draw.rect(screen, (255, 0, 0), spike)
+
+        # タイムの表示
+        time_counter.update(screen)  
 
         pg.display.update()  
         tmr += 10  
