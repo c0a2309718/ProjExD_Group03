@@ -14,6 +14,10 @@ BLOCK_SPEED = 7  # ブロックの移動速度
 NUM_BLOCKS = 3  # ブロックの数
 BLOCK_INTERVAL = 350  # ブロック間の間隔
 SPIKE_HEIGHT = 9  # トゲの高さ（赤い線の太さ）
+ENEMY_SPEED = 13          # 敵の移動速度
+ENEMY_WARNING_TIME = 120  # 予告線の表示時間
+WARNING_FLASH_INTERVAL = 7  # 点滅の間隔
+WARNING_ALPHA = 100  # 予告線の透明度（0〜255）
 
 def SE(sound, vol=0.7):
     sound_effect = pg.mixer.Sound(sound)
@@ -95,6 +99,45 @@ def check_collision(
                 sys.exit()
     return vy, on_block, jump_count, can_double_jump
 
+
+class Enemy:
+    def __init__(self):
+        """敵オブジェクトを初期化"""
+        self.image = pg.image.load("fig/beam.png")  # ビーム画像を読み込む(fig/beam.png)
+        self.image = pg.transform.flip(self.image, True, False)  # 画像を左右反転
+        self.rect = self.image.get_rect()  # 画像の矩形を取得
+        self.rect.x = WIDTH  # 初期位置を画面外に（右端から）
+        self.rect.y = random.randint(50, HEIGHT - 300)  # Y座標はランダム
+        self.warning_time = ENEMY_WARNING_TIME  # 予告線表示時間
+        self.flash_timer = WARNING_FLASH_INTERVAL  # 点滅のタイマー
+        self.flash_visible = True  # 点滅の表示状態
+
+    def update(self):
+        """敵の移動処理"""
+        self.rect.move_ip(-ENEMY_SPEED, 0)  # 左方向に移動
+
+    def draw(self, screen):
+        """敵を描画"""
+        screen.blit(self.image, self.rect)  # ビームを描画
+
+    def draw_warning(self, screen):
+        """予告線を描画"""
+        if self.warning_time > 0:  # 予告線を表示中の場合
+            if self.flash_timer <= 0:  # 点滅タイマーが切れたら点滅状態を切り替え
+                self.flash_visible = not self.flash_visible  # 表示/非表示を切り替え
+                self.flash_timer = WARNING_FLASH_INTERVAL  # タイマーをリセット
+            else:
+                self.flash_timer -= 1
+
+            if self.flash_visible:  # 表示状態のときのみ予告線を描画
+                # 半透明サーフェスを用意
+                warning_surface = pg.Surface((WIDTH, 15), pg.SRCALPHA)
+                warning_surface.fill((255, 0, 0, WARNING_ALPHA))  # 赤色で半透明
+                screen.blit(warning_surface, (0, self.rect.y + self.rect.height // 2 - 5))  # 真ん中を通る予告線(-5で真ん中に調整)
+
+            self.warning_time -= 1  # 表示時間を減少
+
+
 def main():
     pg.init()
     screen = pg.display.set_mode((WIDTH, HEIGHT))  
@@ -115,10 +158,14 @@ def main():
 
     alive = True
 
-    pg.mixer.music.load("sound/BGM：MusMus.mp3")
+    pg.mixer.music.load("sound/BGM_MusMus.mp3")
     pg.mixer.music.set_volume(0.3)
     # 音楽をループ再生（-1は無限ループ）
     pg.mixer.music.play(-1)
+
+    # 敵(ビーム)の初期化
+    enemies = []  # 敵オブジェクトを格納するリスト
+    enemy_spawn_timer = 0  # 敵生成タイマー
 
     while True:
         for event in pg.event.get():
@@ -138,14 +185,32 @@ def main():
         # 衝突判定
         vy, on_block, jump_count, can_double_jump = check_collision(kk_rct, vy, blocks, jump_count, can_double_jump) 
 
-        # 背景の描画
+        # 敵の生成処理
+        enemy_spawn_timer -= 1
+        if enemy_spawn_timer <= 0:  # 一定時間経過後に敵を生成
+            enemies.append(Enemy())
+            enemy_spawn_timer = random.randint(120, 240)  # 次の敵出現タイマー(敵出現頻度を変えるならここ)
+
+        # 背景スクロール
         x = -(tmr % 3200)
         screen.blit(bg_img, [x, 0])
         screen.blit(bg_img2, [x + 1600, 0])
         screen.blit(bg_img, [x + 3200, 0])
         screen.blit(bg_img2, [x + 4800, 0])
 
-        # 「こうかとん」とブロック、トゲの描画
+        # 敵の更新と予告線・当たり判定処理
+        for enemy in enemies:
+            if enemy.warning_time > 0:
+                enemy.draw_warning(screen)  # 予告線を描画
+            else:
+                enemy.update()
+                if kk_rct.colliderect(enemy.rect):  # こうかとんと敵の衝突
+                    print("Game Over!")  # 確認用
+                    return
+                if enemy.rect.right < 0:  # 画面外に出た敵を削除
+                    enemies.remove(enemy)
+
+        # キャラクターの描画
         screen.blit(kk_img, kk_rct)
         if kk_rct.top >= HEIGHT and alive == True:
             pg.mixer.music.stop()
@@ -157,9 +222,14 @@ def main():
         for spike in spikes:
             pg.draw.rect(screen, (255, 0, 0), spike)  
 
-        pg.display.update()  
-        tmr += 10  
-        clock.tick(60) 
+        # 敵の描画
+        for enemy in enemies:
+            if enemy.warning_time <= 0:  # 予告線が終了した後に敵を描画
+                enemy.draw(screen)
+
+        pg.display.update()
+        tmr += 10  # 背景スクロールの速度
+        clock.tick(60)  # フレームレート設定
 
 if __name__ == "__main__":
     pg.init()
