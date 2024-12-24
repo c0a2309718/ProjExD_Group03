@@ -287,6 +287,47 @@ def asobikata(screen: pg.Surface) -> None:
     pg.display.update()
 
 
+
+class Timecount:
+    """
+    タイムをカウントし表示するクラス
+    """
+    def __init__(self):
+        self.font = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 40)
+        self.color = (255, 255, 255)
+        self.start_ticks = pg.time.get_ticks()
+        self.final_time = 0
+
+    def update(self, screen):
+        """
+        経過時間を計算し、画面に表示する
+        """
+        elapsed_time = (pg.time.get_ticks() - self.start_ticks) / 1000
+        self.final_time = elapsed_time  # ゲームオーバー時に最終タイムを記録
+        time_surface = self.font.render(f"Time: {elapsed_time:.2f} 秒", True, self.color)
+        screen.blit(time_surface, (10, 10))
+
+
+def gameover(screen, time_counter):
+    """
+    ゲームオーバー画面を表示する関数
+    """
+    overlay = pg.Surface((WIDTH, HEIGHT))
+    overlay.set_alpha(180)  # 透明度を設定
+    overlay.fill((0, 0, 0))  # 黒色で塗りつぶす
+    screen.blit(overlay, (0, 0))
+
+    font = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 72)
+    gameover_text = font.render("Game Over", True, (255, 0, 0))
+    text_rect = gameover_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 50))
+    screen.blit(gameover_text, text_rect)
+
+    font_small = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 48)
+    time_text = font_small.render(f"Time: {time_counter.final_time:.2f} 秒", True, (255, 255, 255))
+    time_rect = time_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 20))
+    screen.blit(time_text, time_rect)
+    pg.display.update()
+
 def main():
     pg.init()
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -295,7 +336,7 @@ def main():
     fly = Fly()
     
     # 画像読み込み
-    bg_img = pg.image.load("fig/pg_bg.jpg")
+    bg_img = pg.image.load("fig/pg_bg1.jpg")
     bg_img2 = pg.transform.flip(bg_img, True, False)
     kk_img = pg.transform.flip(pg.image.load("fig/3.png"), True, False)
     kk_rct = kk_img.get_rect(midbottom=(100, 200))
@@ -318,6 +359,9 @@ def main():
     # 敵(ビーム)の初期化
     enemies = []  # 敵オブジェクトを格納するリスト
     enemy_spawn_timer = 0  # 敵生成タイマー
+
+    # タイムカウントクラスのインスタンス作成
+    time_counter = Timecount()
 
     stbird = Startkoukaton((300, 385))
     scene = 0  # 画面の切り替え判定 0:スタート画面, 1:ゲーム画面, 2:遊び方画面
@@ -366,6 +410,11 @@ def main():
                             SE("sound/jump.mp3")
                             fly.counter = 10
                             jump_count += 1
+                    elif event.key == pg.K_q:#qキーを押すとゲームオーバー画面が表示される
+                        gameover(screen, time_counter)
+                        time.sleep(2)
+                        return
+
             vy = fly.flying(key_lst, mp, vy)
             kk_rct.move_ip(0, vy)  
 
@@ -410,6 +459,8 @@ def main():
 
             mp.count()
             mp.update(screen)
+            # タイムの表示
+            time_counter.update(screen)  
             pg.display.update()
             tmr += 10  # 背景スクロールの速度
             clock.tick(60)  # フレームレート設定
