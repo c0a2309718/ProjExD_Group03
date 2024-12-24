@@ -19,6 +19,94 @@ ENEMY_WARNING_TIME = 120  # 予告線の表示時間
 WARNING_FLASH_INTERVAL = 7  # 点滅の間隔
 WARNING_ALPHA = 100  # 予告線の透明度（0〜255）
 
+class MP:
+    """
+    生存時間に応じてMPを獲得するクラス
+    1秒 = 1MP
+    """
+    def __init__(self):
+        self.font = pg.font.Font(None, 50)
+        self.color = (174, 0, 45)
+        self.value = 0
+        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = 100, HEIGHT-50
+        self.counter = 0
+
+    def count(self):
+        self.counter += 1
+        if self.counter == 100:
+            self.counter = 0
+            self.value += 10
+
+    def update(self, screen: pg.Surface):
+        self.image = self.font.render(f"MP: {self.value}", 0, self.color)
+        screen.blit(self.image, self.rect)
+
+
+class Enemy:
+    def __init__(self):
+        """敵オブジェクトを初期化"""
+        self.image = pg.image.load("fig/beam.png")  # ビーム画像を読み込む(fig/beam.png)
+        self.image = pg.transform.flip(self.image, True, False)  # 画像を左右反転
+        self.rect = self.image.get_rect()  # 画像の矩形を取得
+        self.rect.x = WIDTH  # 初期位置を画面外に（右端から）
+        self.rect.y = random.randint(50, HEIGHT - 300)  # Y座標はランダム
+        self.warning_time = ENEMY_WARNING_TIME  # 予告線表示時間
+        self.flash_timer = WARNING_FLASH_INTERVAL  # 点滅のタイマー
+        self.flash_visible = True  # 点滅の表示状態
+
+    def update(self):
+        """敵の移動処理"""
+        self.rect.move_ip(-ENEMY_SPEED, 0)  # 左方向に移動
+
+    def draw(self, screen):
+        """敵を描画"""
+        screen.blit(self.image, self.rect)  # ビームを描画
+
+    def draw_warning(self, screen):
+        """予告線を描画"""
+        if self.warning_time > 0:  # 予告線を表示中の場合
+            if self.flash_timer <= 0:  # 点滅タイマーが切れたら点滅状態を切り替え
+                self.flash_visible = not self.flash_visible  # 表示/非表示を切り替え
+                self.flash_timer = WARNING_FLASH_INTERVAL  # タイマーをリセット
+            else:
+                self.flash_timer -= 1
+
+            if self.flash_visible:  # 表示状態のときのみ予告線を描画
+                # 半透明サーフェスを用意
+                warning_surface = pg.Surface((WIDTH, 15), pg.SRCALPHA)
+                warning_surface.fill((255, 0, 0, WARNING_ALPHA))  # 赤色で半透明
+                screen.blit(warning_surface, (0, self.rect.y + self.rect.height // 2 - 5))  # 真ん中を通る予告線(-5で真ん中に調整)
+
+            self.warning_time -= 1  # 表示時間を減少
+
+
+class Fly(pg.sprite.Sprite):
+
+    def __init__(self):
+        self.counter = 0
+
+    def flying(self, key_lst: list, mp: MP, vy: float):
+        """
+        滞空を操作する
+        引数1:押されているキーのリスト
+        """
+        if self.counter > 0:
+            self.counter -= 1
+            return vy + GRAVITY
+        if key_lst[pg.K_f]:
+            if mp.value >= 1:
+                mp.value -= 1
+                return 0
+            else:
+                y = vy + GRAVITY
+                return y
+        else:
+            y = vy + GRAVITY
+            return y
+        
+
 def SE(sound, vol=0.7):
     sound_effect = pg.mixer.Sound(sound)
     sound_effect.set_volume(vol)  # 音量を設定
@@ -42,6 +130,7 @@ def create_random_block(previous_x: int) -> tuple[pg.Rect, pg.Rect]:
     spike = pg.Rect(block_x, block_y + block_height, block_width, SPIKE_HEIGHT)  # ブロックの下に表示される赤い線(トゲの矩形)を作成
     return block, spike
 
+
 def update_blocks(blocks: list[pg.Rect], spikes: list[pg.Rect]) -> None:
     """
     ブロックとトゲを移動させ、画面外になったら再生成する。
@@ -54,6 +143,7 @@ def update_blocks(blocks: list[pg.Rect], spikes: list[pg.Rect]) -> None:
         spikes[i].move_ip(-BLOCK_SPEED, 0)  # トゲも左に移動
         if block.right < 0:  # ブロックが画面外に出たら
             blocks[i], spikes[i] = create_random_block(blocks[i - 1].right)  # 新しいブロックとトゲを作成
+
 
 def check_collision(
     kk_rct: pg.Rect, vy: float, blocks: list[pg.Rect],
@@ -98,52 +188,17 @@ def check_collision(
                 pg.quit()
                 sys.exit()
     return vy, on_block, jump_count, can_double_jump
-
-
-class Enemy:
-    def __init__(self):
-        """敵オブジェクトを初期化"""
-        self.image = pg.image.load("fig/beam.png")  # ビーム画像を読み込む(fig/beam.png)
-        self.image = pg.transform.flip(self.image, True, False)  # 画像を左右反転
-        self.rect = self.image.get_rect()  # 画像の矩形を取得
-        self.rect.x = WIDTH  # 初期位置を画面外に（右端から）
-        self.rect.y = random.randint(50, HEIGHT - 300)  # Y座標はランダム
-        self.warning_time = ENEMY_WARNING_TIME  # 予告線表示時間
-        self.flash_timer = WARNING_FLASH_INTERVAL  # 点滅のタイマー
-        self.flash_visible = True  # 点滅の表示状態
-
-    def update(self):
-        """敵の移動処理"""
-        self.rect.move_ip(-ENEMY_SPEED, 0)  # 左方向に移動
-
-    def draw(self, screen):
-        """敵を描画"""
-        screen.blit(self.image, self.rect)  # ビームを描画
-
-    def draw_warning(self, screen):
-        """予告線を描画"""
-        if self.warning_time > 0:  # 予告線を表示中の場合
-            if self.flash_timer <= 0:  # 点滅タイマーが切れたら点滅状態を切り替え
-                self.flash_visible = not self.flash_visible  # 表示/非表示を切り替え
-                self.flash_timer = WARNING_FLASH_INTERVAL  # タイマーをリセット
-            else:
-                self.flash_timer -= 1
-
-            if self.flash_visible:  # 表示状態のときのみ予告線を描画
-                # 半透明サーフェスを用意
-                warning_surface = pg.Surface((WIDTH, 15), pg.SRCALPHA)
-                warning_surface.fill((255, 0, 0, WARNING_ALPHA))  # 赤色で半透明
-                screen.blit(warning_surface, (0, self.rect.y + self.rect.height // 2 - 5))  # 真ん中を通る予告線(-5で真ん中に調整)
-
-            self.warning_time -= 1  # 表示時間を減少
-
+        
 
 def main():
     pg.init()
-    screen = pg.display.set_mode((WIDTH, HEIGHT))  
-    clock = pg.time.Clock() 
-
-    bg_img = pg.image.load("fig/pg_bg1.jpg")
+    screen = pg.display.set_mode((WIDTH, HEIGHT))
+    clock = pg.time.Clock()
+    mp = MP()
+    fly = Fly()
+    
+    # 画像読み込み
+    bg_img = pg.image.load("fig/pg_bg.jpg")
     bg_img2 = pg.transform.flip(bg_img, True, False)
     kk_img = pg.transform.flip(pg.image.load("fig/3.png"), True, False)
     kk_rct = kk_img.get_rect(midbottom=(100, 200))
@@ -168,6 +223,7 @@ def main():
     enemy_spawn_timer = 0  # 敵生成タイマー
 
     while True:
+        key_lst = pg.key.get_pressed()
         for event in pg.event.get():
             if event.type == pg.QUIT: 
                 return
@@ -176,9 +232,9 @@ def main():
                     if jump_count < 2:  
                         vy = JUMP_POWER
                         SE("sound/jump.mp3")
+                        fly.counter = 10
                         jump_count += 1
-
-        vy += GRAVITY  
+        vy = fly.flying(key_lst, mp, vy)
         kk_rct.move_ip(0, vy)  
 
         update_blocks(blocks, spikes)  # ブロックとトゲを更新
@@ -227,6 +283,8 @@ def main():
             if enemy.warning_time <= 0:  # 予告線が終了した後に敵を描画
                 enemy.draw(screen)
 
+        mp.count()
+        mp.update(screen)
         pg.display.update()
         tmr += 10  # 背景スクロールの速度
         clock.tick(60)  # フレームレート設定
