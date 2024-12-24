@@ -190,6 +190,103 @@ def check_collision(
     return vy, on_block, jump_count, can_double_jump
         
 
+
+class Startkoukaton:
+    """
+    スタート画面のこうかとんと下線に関するクラス
+    """
+    img = pg.image.load("fig/2.png")  # こうかとんの画像
+    img = pg.transform.scale(img, (40, 40))  # こうかとんを縮小
+    sikaku = pg.Surface((WIDTH, HEIGHT))  # 下線Surfaceを生成
+    pg.draw.rect(sikaku, (34, 139, 34), (360, 300, 130, 5))
+    sikaku.set_colorkey((0, 0, 0))
+
+    def __init__(self, xy: tuple[int, int]):
+        """
+        こうかとん画像Surfaceを生成する
+        引数 xy：こうかとん画像の初期位置座標タプル
+        """
+        self.img = __class__.img
+        self.sikaku = __class__.sikaku
+        self.rct: pg.Rect = self.img.get_rect() #こうかとんrectを取得する
+        self.rect: pg.Rect = self.sikaku.get_rect()  # 下線rectを取得する
+        self.rct.center = xy  # こうかとんの初期座標
+        self.rect.center = 365, 400  # 下線の初期座標
+
+    def update(self, key_lst: list[bool], screen: pg.Surface):
+        """
+        押下キーに応じてこうかとんと下線を移動させる
+        引数1 key_lst：押下キーの真理値リスト
+        引数2 screen：画面Surface
+        """
+        if key_lst[pg.K_UP]:
+            self.rct.center = 300, 385
+            self.rect.center = 365, 400
+        if key_lst[pg.K_DOWN]:
+            self.rct.center = 300, 455
+            self.rect.center = 365, 470
+        screen.blit(self.img, self.rct)
+        screen.blit(self.sikaku, self.rect)
+
+
+def start(screen: pg.Surface) -> None:
+    """
+    ゲーム開始時に、スタート画面を表示する関数
+    引数：screen
+    """
+    fonto1 = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 50)
+    fonto2 = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 80)
+    fonto3 = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 25)
+    txt1 = fonto1.render("駆けろ！", True, (50, 205, 50))
+    txt1kage = fonto1.render("駆けろ！", True, (0, 0, 0))
+    txt2 = fonto2.render("こうかとん", True, (50, 205, 50))
+    txt2kage = fonto2.render("こうかとん", True, (0, 0, 0))
+    sentaku1 = fonto3.render("ゲーム開始", True, (0, 0, 0))
+    sentaku2 = fonto3.render("あそびかた", True, (0, 0, 0))
+    botan = fonto3.render("＊スペースで決定", True, (0, 0, 0))
+    
+    screen.blit(txt1kage, [205, HEIGHT//2-130])
+    screen.blit(txt1, [200, HEIGHT//2-135])
+    screen.blit(txt2kage, [205, HEIGHT//2-75])
+    screen.blit(txt2, [200, HEIGHT//2-80])
+    screen.blit(sentaku1, [325, HEIGHT//2+70])
+    screen.blit(sentaku2, [325, HEIGHT//2+140])
+    screen.blit(botan, [280, HEIGHT//2+250])
+
+
+def asobikata(screen: pg.Surface) -> None:
+    """
+    ゲームのルールや操作方法を表示する関数
+    引数：screen
+    """
+    pg.draw.rect(screen, (224, 255, 255), (75, HEIGHT//2-275, 660, 250))
+    pg.draw.rect(screen, (135, 206, 250), (80, HEIGHT//2-270, 650, 240))
+    pg.draw.rect(screen, (224, 255, 255), (75, HEIGHT//2, 660, 230))
+    pg.draw.rect(screen, (135, 206, 250), (80, HEIGHT//2+5, 650, 220))
+    pg.draw.rect(screen, (224, 255, 255), (337, HEIGHT//2+242, 166, 46))
+    pg.draw.rect(screen, (135, 206, 250), (340, HEIGHT//2+245, 160, 40))
+    fonto1 = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 35)
+    fonto2 = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 20)
+    midasi1 = fonto1.render("＊ルール＊", True, (0, 0, 0))
+    rule1 = fonto2.render("・障害物をよけながらジャンプしてブロックを渡ろう", True, (0, 0, 0))
+    rule2 = fonto2.render("・ブロックにぶつかったり落ちたらゲームオーバー", True, (0, 0, 0))
+    rule3 = fonto2.render("・右側からくるビームに当たったらゲームオーバー", True, (0, 0, 0))
+    midasi2 = fonto1.render("＊操作方法＊", True, (0, 0, 0))
+    sousa1 = fonto2.render("・スペースでジャンプ（2段ジャンプまで）", True, (0, 0, 0))
+    sousa2 = fonto2.render("・Fキーでその場に浮遊し続ける", True, (0, 0, 0))
+    modoru = fonto2.render("右シフトで戻る", True, (0, 0, 0))
+    
+    screen.blit(midasi1, [315, HEIGHT//2-265])
+    screen.blit(rule1, [160, HEIGHT//2-180])
+    screen.blit(rule2, [160, HEIGHT//2-140])
+    screen.blit(rule3, [160, HEIGHT//2-100])
+    screen.blit(midasi2, [305, HEIGHT//2+15])
+    screen.blit(sousa1, [220, HEIGHT//2+100])
+    screen.blit(sousa2, [220, HEIGHT//2+140])
+    screen.blit(modoru, [350, HEIGHT//2+255])
+    pg.display.update()
+
+
 def main():
     pg.init()
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -222,72 +319,107 @@ def main():
     enemies = []  # 敵オブジェクトを格納するリスト
     enemy_spawn_timer = 0  # 敵生成タイマー
 
+    stbird = Startkoukaton((300, 385))
+    scene = 0  # 画面の切り替え判定 0:スタート画面, 1:ゲーム画面, 2:遊び方画面
+    sentaku = 0  # 選択肢の切り替え判定
+    
     while True:
         key_lst = pg.key.get_pressed()
-        for event in pg.event.get():
-            if event.type == pg.QUIT: 
-                return
-            elif event.type == pg.KEYDOWN:
-                if event.key == pg.K_SPACE:  
-                    if jump_count < 2:  
-                        vy = JUMP_POWER
-                        SE("sound/jump.mp3")
-                        fly.counter = 10
-                        jump_count += 1
-        vy = fly.flying(key_lst, mp, vy)
-        kk_rct.move_ip(0, vy)  
-
-        update_blocks(blocks, spikes)  # ブロックとトゲを更新
-        # 衝突判定
-        vy, on_block, jump_count, can_double_jump = check_collision(kk_rct, vy, blocks, jump_count, can_double_jump) 
-
-        # 敵の生成処理
-        enemy_spawn_timer -= 1
-        if enemy_spawn_timer <= 0:  # 一定時間経過後に敵を生成
-            enemies.append(Enemy())
-            enemy_spawn_timer = random.randint(120, 240)  # 次の敵出現タイマー(敵出現頻度を変えるならここ)
-
-        # 背景スクロール
-        x = -(tmr % 3200)
-        screen.blit(bg_img, [x, 0])
-        screen.blit(bg_img2, [x + 1600, 0])
-        screen.blit(bg_img, [x + 3200, 0])
-        screen.blit(bg_img2, [x + 4800, 0])
-
-        # 敵の更新と予告線・当たり判定処理
-        for enemy in enemies:
-            if enemy.warning_time > 0:
-                enemy.draw_warning(screen)  # 予告線を描画
-            else:
-                enemy.update()
-                if kk_rct.colliderect(enemy.rect):  # こうかとんと敵の衝突
-                    print("Game Over!")  # 確認用
+        # スタート画面
+        if scene == 0:
+            for event in pg.event.get():
+                if event.type == pg.QUIT: 
                     return
-                if enemy.rect.right < 0:  # 画面外に出た敵を削除
-                    enemies.remove(enemy)
+            screen.blit(bg_img, [0, 0])  # 背景画像を表示
+            start(screen)
+            stbird.update(key_lst, screen)
+            pg.display.update()
+            if key_lst[pg.K_UP]:
+                sentaku = 0  # ゲーム開始を選択
+            if key_lst[pg.K_DOWN]:
+                sentaku = 1  # あそびかたを選択
+            if key_lst[pg.K_SPACE]:  # スペースキーで決定
+                if sentaku == 0:
+                    scene = 1  # ゲーム画面へ移動
+                if sentaku == 1:
+                    scene = 2  # あそびかた画面へ移動
 
-        # キャラクターの描画
-        screen.blit(kk_img, kk_rct)
-        if kk_rct.top >= HEIGHT and alive == True:
-            pg.mixer.music.stop()
-            SE("sound/scream.mp3")
-            alive = False
+        # あそびかた画面
+        elif scene == 2:
+            for event in pg.event.get():
+                if event.type == pg.QUIT: 
+                    return
+            screen.blit(bg_img, [0, 0])  # 背景画像を表示
+            asobikata(screen)
+            if key_lst[pg.K_RSHIFT]:
+                scene = 0  # スタート画面へ移動
+
+        # ゲーム画面
+        elif scene == 1:
+            for event in pg.event.get():
+                if event.type == pg.QUIT: 
+                    return
+                elif event.type == pg.KEYDOWN:      
+                    if event.key == pg.K_SPACE: 
+                        if jump_count < 2:  
+                            vy = JUMP_POWER
+                            SE("sound/jump.mp3")
+                            fly.counter = 10
+                            jump_count += 1
+            vy = fly.flying(key_lst, mp, vy)
+            kk_rct.move_ip(0, vy)  
+
+            update_blocks(blocks, spikes)  # ブロックとトゲを更新
+            # 衝突判定
+            vy, on_block, jump_count, can_double_jump = check_collision(kk_rct, vy, blocks, jump_count, can_double_jump) 
+
+            # 敵の生成処理
+            enemy_spawn_timer -= 1
+            if enemy_spawn_timer <= 0:  # 一定時間経過後に敵を生成
+                enemies.append(Enemy())
+                enemy_spawn_timer = random.randint(120, 240)  # 次の敵出現タイマー(敵出現頻度を変えるならここ)
+
+            # 敵の更新と予告線・当たり判定処理
+            for enemy in enemies:
+                if enemy.warning_time > 0:
+                    enemy.draw_warning(screen)  # 予告線を描画
+                else:
+                    enemy.update()
+                    if kk_rct.colliderect(enemy.rect):  # こうかとんと敵の衝突
+                        print("Game Over!")  # 確認用
+                        return
+                    if enemy.rect.right < 0:  # 画面外に出た敵を削除
+                        enemies.remove(enemy)
+
+            # キャラクターの描画
+            screen.blit(kk_img, kk_rct)
+            if kk_rct.top >= HEIGHT and alive == True:
+                pg.mixer.music.stop()
+                SE("sound/scream.mp3")
+                alive = False
     
-        for block in blocks:
-            pg.draw.rect(screen, (0, 255, 0), block) 
-        for spike in spikes:
-            pg.draw.rect(screen, (255, 0, 0), spike)  
+            for block in blocks:
+                pg.draw.rect(screen, (0, 255, 0), block) 
+            for spike in spikes:
+                pg.draw.rect(screen, (255, 0, 0), spike)  
 
-        # 敵の描画
-        for enemy in enemies:
-            if enemy.warning_time <= 0:  # 予告線が終了した後に敵を描画
-                enemy.draw(screen)
+            # 敵の描画
+            for enemy in enemies:
+                if enemy.warning_time <= 0:  # 予告線が終了した後に敵を描画
+                    enemy.draw(screen)
 
-        mp.count()
-        mp.update(screen)
-        pg.display.update()
-        tmr += 10  # 背景スクロールの速度
-        clock.tick(60)  # フレームレート設定
+            mp.count()
+            mp.update(screen)
+            pg.display.update()
+            tmr += 10  # 背景スクロールの速度
+            clock.tick(60)  # フレームレート設定
+
+            # 背景スクロール
+            x = -(tmr % 3200)
+            screen.blit(bg_img, [x, 0])
+            screen.blit(bg_img2, [x + 1600, 0])
+            screen.blit(bg_img, [x + 3200, 0])
+            screen.blit(bg_img2, [x + 4800, 0])
 
 if __name__ == "__main__":
     pg.init()
