@@ -68,8 +68,8 @@ def start(screen: pg.Surface) -> None:
     fonto1 = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 50)
     fonto2 = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 80)
     fonto3 = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 25)
-    txt1 = fonto1.render("翔けろ！", True, (50, 205, 50))
-    txt1kage = fonto1.render("翔けろ！", True, (0, 0, 0))
+    txt1 = fonto1.render("駆けろ！", True, (50, 205, 50))
+    txt1kage = fonto1.render("駆けろ！", True, (0, 0, 0))
     txt2 = fonto2.render("こうかとん", True, (50, 205, 50))
     txt2kage = fonto2.render("こうかとん", True, (0, 0, 0))
     sentaku1 = fonto3.render("ゲーム開始", True, (0, 0, 0))
@@ -119,7 +119,7 @@ def asobikata(screen: pg.Surface) -> None:
 
 
 def main():
-    pg.display.set_caption("翔けろ！こうかとん")
+    pg.display.set_caption("駆けろ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     clock = pg.time.Clock()
 
