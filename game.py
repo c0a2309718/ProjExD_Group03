@@ -70,6 +70,7 @@ class Enemy:
             if self.flash_timer <= 0:  # 点滅タイマーが切れたら点滅状態を切り替え
                 self.flash_visible = not self.flash_visible  # 表示/非表示を切り替え
                 self.flash_timer = WARNING_FLASH_INTERVAL  # タイマーをリセット
+                SE("sound/danger.mp3", 0.2)
             else:
                 self.flash_timer -= 1
 
@@ -147,7 +148,7 @@ def update_blocks(blocks: list[pg.Rect], spikes: list[pg.Rect]) -> None:
 
 def check_collision(
     kk_rct: pg.Rect, vy: float, blocks: list[pg.Rect],
-    jump_count: int, can_double_jump: bool
+    jump_count: int, can_double_jump: bool, screen, time_counter
 ) -> tuple[float, bool, int, bool]:
     """
     「こうかとん」とブロック、トゲの衝突を判定。
@@ -171,20 +172,20 @@ def check_collision(
                 can_double_jump = True  
             elif kk_rct.top+5 >= block.bottom:  # 「こうかとん」がブロックの下から衝突した場合
                 pg.mixer.music.stop()
+                gameover(screen, time_counter)
                 SE("sound/clash.mp3", 1.5)
                 time.sleep(0.5)
                 SE("sound/scream.mp3", 1.5)
-                time.sleep(2)
-                print("ゲームオーバー")
+                time.sleep(3)
                 pg.quit()
                 sys.exit()
             else:  # その他の衝突
                 pg.mixer.music.stop()
+                gameover(screen, time_counter)
                 SE("sound/clash.mp3", 1.5)
                 time.sleep(0.5)
                 SE("sound/scream.mp3", 1.5)
-                time.sleep(2)
-                print("ゲームオーバー2")
+                time.sleep(3)
                 pg.quit()
                 sys.exit()
     return vy, on_block, jump_count, can_double_jump
@@ -263,17 +264,17 @@ def asobikata(screen: pg.Surface) -> None:
     pg.draw.rect(screen, (135, 206, 250), (80, HEIGHT//2-270, 650, 240))
     pg.draw.rect(screen, (224, 255, 255), (75, HEIGHT//2, 660, 230))
     pg.draw.rect(screen, (135, 206, 250), (80, HEIGHT//2+5, 650, 220))
-    pg.draw.rect(screen, (224, 255, 255), (337, HEIGHT//2+242, 166, 46))
-    pg.draw.rect(screen, (135, 206, 250), (340, HEIGHT//2+245, 160, 40))
+    pg.draw.rect(screen, (224, 255, 255), (307, HEIGHT//2+242, 166, 46))
+    pg.draw.rect(screen, (135, 206, 250), (310, HEIGHT//2+245, 160, 40))
     fonto1 = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 35)
     fonto2 = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 20)
     midasi1 = fonto1.render("＊ルール＊", True, (0, 0, 0))
-    rule1 = fonto2.render("・障害物をよけながらジャンプしてブロックを渡ろう", True, (0, 0, 0))
+    rule1 = fonto2.render("・ジャンプしてブロックを渡ろう", True, (0, 0, 0))
     rule2 = fonto2.render("・ブロックにぶつかったり落ちたらゲームオーバー", True, (0, 0, 0))
     rule3 = fonto2.render("・右側からくるビームに当たったらゲームオーバー", True, (0, 0, 0))
     midasi2 = fonto1.render("＊操作方法＊", True, (0, 0, 0))
     sousa1 = fonto2.render("・スペースでジャンプ（2段ジャンプまで）", True, (0, 0, 0))
-    sousa2 = fonto2.render("・Fキーでその場に浮遊し続ける", True, (0, 0, 0))
+    sousa2 = fonto2.render("・MPを消費してFキーを押し続けるとその場に浮遊し続ける", True, (0, 0, 0))
     modoru = fonto2.render("右シフトで戻る", True, (0, 0, 0))
     
     screen.blit(midasi1, [315, HEIGHT//2-265])
@@ -281,9 +282,9 @@ def asobikata(screen: pg.Surface) -> None:
     screen.blit(rule2, [160, HEIGHT//2-140])
     screen.blit(rule3, [160, HEIGHT//2-100])
     screen.blit(midasi2, [305, HEIGHT//2+15])
-    screen.blit(sousa1, [220, HEIGHT//2+100])
-    screen.blit(sousa2, [220, HEIGHT//2+140])
-    screen.blit(modoru, [350, HEIGHT//2+255])
+    screen.blit(sousa1, [160, HEIGHT//2+100])
+    screen.blit(sousa2, [160, HEIGHT//2+140])
+    screen.blit(modoru, [320, HEIGHT//2+255])
     pg.display.update()
 
 
@@ -360,12 +361,12 @@ def main():
     enemies = []  # 敵オブジェクトを格納するリスト
     enemy_spawn_timer = 0  # 敵生成タイマー
 
-    # タイムカウントクラスのインスタンス作成
-    time_counter = Timecount()
-
     stbird = Startkoukaton((300, 385))
     scene = 0  # 画面の切り替え判定 0:スタート画面, 1:ゲーム画面, 2:遊び方画面
     sentaku = 0  # 選択肢の切り替え判定
+    
+    font = pg.font.Font(None, 40)  # デフォルトフォント、サイズ50
+    text = font.render("BGM:MusMus", True, (255, 255, 255))  # テキストを描画（白色）
     
     while True:
         key_lst = pg.key.get_pressed()
@@ -385,6 +386,8 @@ def main():
             if key_lst[pg.K_SPACE]:  # スペースキーで決定
                 if sentaku == 0:
                     scene = 1  # ゲーム画面へ移動
+                    # タイムカウントクラスのインスタンス作成
+                    time_counter = Timecount()
                 if sentaku == 1:
                     scene = 2  # あそびかた画面へ移動
 
@@ -410,17 +413,13 @@ def main():
                             SE("sound/jump.mp3")
                             fly.counter = 10
                             jump_count += 1
-                    elif event.key == pg.K_q:#qキーを押すとゲームオーバー画面が表示される
-                        gameover(screen, time_counter)
-                        time.sleep(2)
-                        return
-
+            
             vy = fly.flying(key_lst, mp, vy)
             kk_rct.move_ip(0, vy)  
 
             update_blocks(blocks, spikes)  # ブロックとトゲを更新
             # 衝突判定
-            vy, on_block, jump_count, can_double_jump = check_collision(kk_rct, vy, blocks, jump_count, can_double_jump) 
+            vy, on_block, jump_count, can_double_jump = check_collision(kk_rct, vy, blocks, jump_count, can_double_jump, screen, time_counter) 
 
             # 敵の生成処理
             enemy_spawn_timer -= 1
@@ -435,18 +434,24 @@ def main():
                 else:
                     enemy.update()
                     if kk_rct.colliderect(enemy.rect):  # こうかとんと敵の衝突
-                        print("Game Over!")  # 確認用
+                        pg.mixer.music.stop()
+                        gameover(screen, time_counter)
+                        SE("sound/exp.mp3", 1)
+                        time.sleep(3)
                         return
                     if enemy.rect.right < 0:  # 画面外に出た敵を削除
                         enemies.remove(enemy)
 
             # キャラクターの描画
             screen.blit(kk_img, kk_rct)
-            if kk_rct.top >= HEIGHT and alive == True:
+            if kk_rct.top >= HEIGHT+20 and alive == True:
+                gameover(screen, time_counter)
                 pg.mixer.music.stop()
-                SE("sound/scream.mp3")
+                SE("sound/scream.mp3", 1.5)
                 alive = False
-    
+                time.sleep(3)
+                return
+
             for block in blocks:
                 pg.draw.rect(screen, (0, 255, 0), block) 
             for spike in spikes:
@@ -471,6 +476,8 @@ def main():
             screen.blit(bg_img2, [x + 1600, 0])
             screen.blit(bg_img, [x + 3200, 0])
             screen.blit(bg_img2, [x + 4800, 0])
+
+            screen.blit(text, (WIDTH-200, HEIGHT-40))
 
 if __name__ == "__main__":
     pg.init()
