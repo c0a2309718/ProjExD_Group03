@@ -156,10 +156,10 @@ def main():
 
     alive = True
 
-    pg.mixer.music.load("sound/BGM：MusMus.mp3")
-    pg.mixer.music.set_volume(0.3)
-    # 音楽をループ再生（-1は無限ループ）
-    pg.mixer.music.play(-1)
+    # pg.mixer.music.load("sound/BGM：MusMus.mp3")
+    # pg.mixer.music.set_volume(0.3)
+    # # 音楽をループ再生（-1は無限ループ）
+    # pg.mixer.music.play(-1)
 
     # タイムカウントクラスのインスタンス作成
     time_counter = Timecount()
