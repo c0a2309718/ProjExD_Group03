@@ -39,10 +39,10 @@ class MP:
         self.counter += 1
         if self.counter == 100:
             self.counter = 0
-            self.value += 1
+            self.value += 10
 
     def update(self, screen: pg.Surface):
-        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+        self.image = self.font.render(f"MP: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
 
 
@@ -61,13 +61,14 @@ class Fly(pg.sprite.Sprite):
         """
         if key_lst[pg.K_f]:
             if mp.value >= 1:
-                return mp.value-1, 0
+                mp.value -= 1
+                return 0
             else:
                 y = vy + GRAVITY
-                return mp.value, y
+                return y
         else:
             y = vy + GRAVITY
-            return mp.value, y
+            return y
 
 
 def main():
@@ -103,7 +104,7 @@ def main():
         if key_lst[pg.K_SPACE]:
             vy = JUMP_POWER  # ジャンプ初速を設定
         # 重力による縦移動
-        mp, vy = fly.flying(key_lst, mp, vy)
+        vy = fly.flying(key_lst, mp, vy)
         kk_rct.move_ip(0, vy)
         # ブロックの移動処理と再生成
         for i, block in enumerate(blocks):
