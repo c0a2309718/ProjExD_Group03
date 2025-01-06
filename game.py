@@ -11,9 +11,7 @@ WIDTH, HEIGHT = 800, 600  # 画面の幅と高さ
 GRAVITY = 0.4  # 重力の強さ
 JUMP_POWER = -11  # ジャンプの力
 BLOCK_SPEED = 7  # ブロックの移動速度
-NUM_BLOCKS = 3  # ブロックの数
 BLOCK_INTERVAL = 350  # ブロック間の間隔
-SPIKE_HEIGHT = 9  # トゲの高さ（赤い線の太さ）
 ENEMY_SPEED = 13          # 敵の移動速度
 ENEMY_WARNING_TIME = 120  # 予告線の表示時間
 WARNING_FLASH_INTERVAL = 7  # 点滅の間隔
@@ -128,7 +126,7 @@ def create_random_block(previous_x: int) -> tuple[pg.Rect, pg.Rect]:
     block_y = random.randint(HEIGHT - 450, HEIGHT - 200)  # ブロックのY座標をランダムに設定
 
     block = pg.Rect(block_x, block_y, block_width, block_height)  # ブロックの矩形を作成
-    spike = pg.Rect(block_x, block_y + block_height, block_width, SPIKE_HEIGHT)  # ブロックの下に表示される赤い線(トゲの矩形)を作成
+    spike = pg.Rect(block_x, block_y + block_height, block_width, 9)  # ブロックの下に表示される赤い線(トゲの矩形)を作成
     return block, spike
 
 
@@ -342,8 +340,8 @@ def main():
     kk_img = pg.transform.flip(pg.image.load("fig/3.png"), True, False)
     kk_rct = kk_img.get_rect(midbottom=(100, 200))
 
-    blocks = [pg.Rect(0, 200, 100 + i * 300, 20) for i in range(NUM_BLOCKS)] #初期足場のリストを作成
-    spikes = [pg.Rect(0, 200 + 20, 100 + i * 300, SPIKE_HEIGHT) for i in range(NUM_BLOCKS)] #初期足場に対応するトゲのリストを作成
+    blocks = [pg.Rect(0, 200, 100 + i * 300, 20) for i in range(3)] #初期足場のリストを作成
+    spikes = [pg.Rect(0, 200 + 20, 100 + i * 300, 9) for i in range(3)] #初期足場に対応するトゲのリストを作成
 
     vy = 0  #初期速度
     tmr = 0  # タイマー
@@ -421,7 +419,7 @@ def main():
             # 衝突判定
             vy, on_block, jump_count, can_double_jump = check_collision(kk_rct, vy, blocks, jump_count, can_double_jump, screen, time_counter) 
 
-            # 敵の生成処理
+            # ビームの生成処理
             enemy_spawn_timer -= 1
             if enemy_spawn_timer <= 0:  # 一定時間経過後に敵を生成
                 enemies.append(Enemy())
