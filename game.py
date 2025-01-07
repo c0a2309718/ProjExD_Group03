@@ -42,6 +42,31 @@ class MP:
         screen.blit(self.image, self.rect)
 
 
+class Fly(pg.sprite.Sprite):
+
+    def __init__(self):
+        self.counter = 0
+
+    def flying(self, key_lst: list, mp: MP, vy: float):
+        """
+        滞空を操作する
+        引数1:押されているキーのリスト
+        """
+        if self.counter > 0:
+            self.counter -= 1
+            return vy + GRAVITY
+        if key_lst[pg.K_f]:
+            if mp.value >= 1:
+                mp.value -= 1
+                return 0
+            else:
+                y = vy + GRAVITY
+                return y
+        else:
+            y = vy + GRAVITY
+            return y
+
+
 class Enemy:
     def __init__(self):
         """敵オブジェクトを初期化"""
@@ -79,32 +104,65 @@ class Enemy:
                 screen.blit(warning_surface, (0, self.rect.y + self.rect.height // 2 - 5))  # 真ん中を通る予告線(-5で真ん中に調整)
 
             self.warning_time -= 1  # 表示時間を減少
-
-
-class Fly(pg.sprite.Sprite):
-
-    def __init__(self):
-        self.counter = 0
-
-    def flying(self, key_lst: list, mp: MP, vy: float):
-        """
-        滞空を操作する
-        引数1:押されているキーのリスト
-        """
-        if self.counter > 0:
-            self.counter -= 1
-            return vy + GRAVITY
-        if key_lst[pg.K_f]:
-            if mp.value >= 1:
-                mp.value -= 1
-                return 0
-            else:
-                y = vy + GRAVITY
-                return y
-        else:
-            y = vy + GRAVITY
-            return y
         
+
+class Timecount:
+    """
+    タイムをカウントし表示するクラス
+    """
+    def __init__(self):
+        self.font = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 40)
+        self.color = (255, 255, 255)
+        self.start_ticks = pg.time.get_ticks()
+        self.final_time = 0
+
+    def update(self, screen):
+        """
+        経過時間を計算し、画面に表示する
+        """
+        elapsed_time = (pg.time.get_ticks() - self.start_ticks) / 1000
+        self.final_time = elapsed_time  # ゲームオーバー時に最終タイムを記録
+        time_surface = self.font.render(f"Time: {elapsed_time:.2f} 秒", True, self.color)
+        screen.blit(time_surface, (10, 10))
+
+
+class Startkoukaton:
+    """
+    スタート画面のこうかとんと下線に関するクラス
+    """
+    img = pg.image.load("fig/2.png")  # こうかとんの画像
+    img = pg.transform.scale(img, (40, 40))  # こうかとんを縮小
+    sikaku = pg.Surface((WIDTH, HEIGHT))  # 下線Surfaceを生成
+    pg.draw.rect(sikaku, (34, 139, 34), (360, 300, 130, 5))
+    sikaku.set_colorkey((0, 0, 0))
+
+    def __init__(self, xy: tuple[int, int]):
+        """
+        こうかとん画像Surfaceを生成する
+        引数 xy：こうかとん画像の初期位置座標タプル
+        """
+        self.img = __class__.img
+        self.sikaku = __class__.sikaku
+        self.rct: pg.Rect = self.img.get_rect() #こうかとんrectを取得する
+        self.rect: pg.Rect = self.sikaku.get_rect()  # 下線rectを取得する
+        self.rct.center = xy  # こうかとんの初期座標
+        self.rect.center = 365, 400  # 下線の初期座標
+
+    def update(self, key_lst: list[bool], screen: pg.Surface):
+        """
+        押下キーに応じてこうかとんと下線を移動させる
+        引数1 key_lst：押下キーの真理値リスト
+        引数2 screen：画面Surface
+        """
+        if key_lst[pg.K_UP]:
+            self.rct.center = 300, 385
+            self.rect.center = 365, 400
+        if key_lst[pg.K_DOWN]:
+            self.rct.center = 300, 455
+            self.rect.center = 365, 470
+        screen.blit(self.img, self.rct)
+        screen.blit(self.sikaku, self.rect)
+
 
 def SE(sound, vol=0.7):
     sound_effect = pg.mixer.Sound(sound)
@@ -189,45 +247,6 @@ def check_collision(
     return vy, on_block, jump_count, can_double_jump
         
 
-
-class Startkoukaton:
-    """
-    スタート画面のこうかとんと下線に関するクラス
-    """
-    img = pg.image.load("fig/2.png")  # こうかとんの画像
-    img = pg.transform.scale(img, (40, 40))  # こうかとんを縮小
-    sikaku = pg.Surface((WIDTH, HEIGHT))  # 下線Surfaceを生成
-    pg.draw.rect(sikaku, (34, 139, 34), (360, 300, 130, 5))
-    sikaku.set_colorkey((0, 0, 0))
-
-    def __init__(self, xy: tuple[int, int]):
-        """
-        こうかとん画像Surfaceを生成する
-        引数 xy：こうかとん画像の初期位置座標タプル
-        """
-        self.img = __class__.img
-        self.sikaku = __class__.sikaku
-        self.rct: pg.Rect = self.img.get_rect() #こうかとんrectを取得する
-        self.rect: pg.Rect = self.sikaku.get_rect()  # 下線rectを取得する
-        self.rct.center = xy  # こうかとんの初期座標
-        self.rect.center = 365, 400  # 下線の初期座標
-
-    def update(self, key_lst: list[bool], screen: pg.Surface):
-        """
-        押下キーに応じてこうかとんと下線を移動させる
-        引数1 key_lst：押下キーの真理値リスト
-        引数2 screen：画面Surface
-        """
-        if key_lst[pg.K_UP]:
-            self.rct.center = 300, 385
-            self.rect.center = 365, 400
-        if key_lst[pg.K_DOWN]:
-            self.rct.center = 300, 455
-            self.rect.center = 365, 470
-        screen.blit(self.img, self.rct)
-        screen.blit(self.sikaku, self.rect)
-
-
 def start(screen: pg.Surface) -> None:
     """
     ゲーム開始時に、スタート画面を表示する関数
@@ -286,27 +305,6 @@ def asobikata(screen: pg.Surface) -> None:
     pg.display.update()
 
 
-
-class Timecount:
-    """
-    タイムをカウントし表示するクラス
-    """
-    def __init__(self):
-        self.font = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 40)
-        self.color = (255, 255, 255)
-        self.start_ticks = pg.time.get_ticks()
-        self.final_time = 0
-
-    def update(self, screen):
-        """
-        経過時間を計算し、画面に表示する
-        """
-        elapsed_time = (pg.time.get_ticks() - self.start_ticks) / 1000
-        self.final_time = elapsed_time  # ゲームオーバー時に最終タイムを記録
-        time_surface = self.font.render(f"Time: {elapsed_time:.2f} 秒", True, self.color)
-        screen.blit(time_surface, (10, 10))
-
-
 def gameover(screen, time_counter):
     """
     ゲームオーバー画面を表示する関数
@@ -326,6 +324,7 @@ def gameover(screen, time_counter):
     time_rect = time_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 20))
     screen.blit(time_text, time_rect)
     pg.display.update()
+
 
 def main():
     pg.init()
